@@ -1,0 +1,46 @@
+background = #000000
+foreground = #e7e9ea
+cursor-color = #e7e9ea
+cursor-text = #000000
+selection-background = #e7e9ea
+selection-foreground = #000000
+palette = 0=#21222c
+palette = 1=#ff5555
+palette = 2=#50fa7b
+palette = 3=#f1fa8c
+palette = 4=#bd93f9
+palette = 5=#ff79c6
+palette = 6=#8be9fd
+palette = 7=#f8f8f2
+palette = 8=#6272a4
+palette = 9=#ff6e6e
+palette = 10=#69ff94
+palette = 11=#ffffa5
+palette = 12=#d6acff
+palette = 13=#ff92df
+palette = 14=#a4ffff
+palette = 15=#ffffff
+
+font-family = "JetBrainsMono Nerd Font"
+# Alacritty can't draw ligatures, so turn them off to look the same.
+font-feature = -calt
+font-feature = -liga
+font-feature = -dlig
+# Alacritty's size 9 on the 2x Linux screen draws about as large as 12 here.
+font-size = 12
+
+window-padding-x = 14
+window-padding-y = 14
+confirm-close-surface = false
+resize-overlay = never
+
+cursor-style-blink = false
+shell-integration-features = no-cursor
+
+term = xterm-256color
+clipboard-read = allow
+macos-option-as-alt = true
+
+keybind = ctrl+enter=new_window
+keybind = shift+enter=text:\x1b\r
+keybind = f11=toggle_fullscreen
