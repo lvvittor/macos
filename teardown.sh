@@ -15,7 +15,7 @@ echo "the nvim, ghostty, and paneru configs, the paneru login service, Neovim pl
 preexisting claude-dir || echo "It also deletes ~/.claude and ~/.claude.json, which install.sh created."
 preexisting claude-bin || echo "It also uninstalls Claude Code from ~/.local."
 echo "It quits Chrome and Brave and removes Bitwarden and its data from them. Log out of Bitwarden first."
-echo "It deletes SSH keys, gh, npm, Docker, Vercel, and rclone logins, the Colima VM, and pnpm and mise data, unless they existed before install.sh first ran."
+echo "It deletes SSH keys, gh, npm, Docker, Vercel, and rclone logins, the Colima VM, and pnpm, mise, and Rust data, unless they existed before install.sh first ran."
 echo "Homebrew packages stay. Your project folders are untouched."
 read -r -p "Type yes to continue: " ok
 [[ $ok == yes ]] || { echo "Stopped."; exit 1; }

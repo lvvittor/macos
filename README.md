@@ -6,7 +6,7 @@ Install everything:
 curl -fsSL https://raw.githubusercontent.com/lvvittor/macos/main/bootstrap.sh | bash
 ```
 
-Install everything plus dev tools (pnpm, just, mise with bun, go, java, node, and python, deno, the Vercel CLI, rclone, and Docker through Colima):
+Install everything plus dev tools (pnpm, just, mise with bun, node, python, and rust, TypeScript, deno, the Vercel CLI, rclone, and Docker through Colima):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/lvvittor/macos/main/bootstrap.sh | bash -s -- --tools

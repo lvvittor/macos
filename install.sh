@@ -20,7 +20,7 @@ SCRUB_PATHS=(
   "$HOME/Library/Application Support/com.vercel.cli"
   "$HOME/Library/pnpm" "$HOME/.local/share/pnpm"
   "$HOME/.local/share/mise" "$HOME/.local/state/mise" "$HOME/.cache/mise"
-  "$HOME/.config/rclone"
+  "$HOME/.config/rclone" "$HOME/.rustup" "$HOME/.cargo"
 )
 
 for arg in "$@"; do
@@ -197,10 +197,13 @@ tools() {
   place "$HERE/config/mise/config.toml" "$HOME/.config/mise/config.toml"
   write_block "$HOME/.zshrc" mise 'eval "$(mise activate zsh)"'
   run mise install || echo "mise install exited non-zero. Run mise install again in a new terminal."
-  if command -v vercel >/dev/null; then
-    echo "Vercel CLI already installed."
+  local missing=()
+  command -v vercel >/dev/null || missing+=(vercel)
+  command -v tsc >/dev/null || missing+=(typescript)
+  if (( ${#missing[@]} )); then
+    run npm install -g "${missing[@]}"
   else
-    run npm install -g vercel
+    echo "Vercel CLI and TypeScript already installed."
   fi
 }
 
@@ -228,7 +231,7 @@ summary() {
 EOF
   if (( TOOLS )); then
     echo "  8. Run colima start once, then docker run hello-world."
-    echo "  9. Run mise ls. bun, go, java, node, and python should be listed."
+    echo "  9. Run mise ls. bun, node, python, and rust should be listed."
     echo " 10. For Google Drive, run rclone config create gdrive drive scope=drive and sign in."
   fi
   echo "When you leave, run teardown.sh from this folder."
