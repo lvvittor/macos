@@ -11,6 +11,9 @@ BIN="$T/bin"
 mkdir -p "$HOME/.config/nvim" "$BIN"
 echo ORIGINAL >"$HOME/.config/nvim/init.lua"
 echo "USER LINE" >"$HOME/.zshrc"
+mkdir -p "$HOME/Applications/Google Chrome.app"
+CHROME="$HOME/Library/Application Support/Google/Chrome"
+BW=nngceckbapebfimnlniiiahkandclblb
 
 stub() { printf '#!/usr/bin/env bash\n%s\n' "$2" >"$BIN/$1"; chmod +x "$BIN/$1"; }
 stub uname 'case "$1" in -s) echo Darwin ;; -m) echo arm64 ;; *) /usr/bin/uname "$@" ;; esac'
@@ -46,6 +49,9 @@ grep -q 'already in the Keychain' "$T/run2.log" || fail "second run reuses the k
 [[ -f $HOME/.config/ghostty/config ]] || fail "ghostty config placed"
 grep -q "window_focus_west" "$HOME/.paneru.toml" || fail "paneru config placed"
 grep -qx start "$HOME/.fake-paneru-calls" || fail "paneru service started"
+grep -q clients2.google.com "$CHROME/External Extensions/$BW.json" || fail "bitwarden queued for chrome"
+[[ ! -e "$HOME/Library/Application Support/BraveSoftware" ]] || fail "nothing written for brave, which is not installed"
+mkdir -p "$CHROME/Default/Extensions/$BW/1.0" "$CHROME/Default/Local Extension Settings/$BW" "$CHROME/Default/Local Extension Settings/other"
 
 echo yes | bash "$ROOT/teardown.sh" >"$T/teardown.log"
 
@@ -53,6 +59,9 @@ echo yes | bash "$ROOT/teardown.sh" >"$T/teardown.log"
 [[ ! -e $HOME/.config/nvim.mac-setup-bak ]] || fail "backup consumed"
 [[ ! -e $HOME/.config/ghostty && ! -e $HOME/.paneru.toml ]] || fail "new configs removed"
 grep -qx uninstall "$HOME/.fake-paneru-calls" || fail "paneru service uninstalled"
+[[ ! -e "$CHROME/External Extensions/$BW.json" ]] || fail "bitwarden file removed"
+[[ ! -e "$CHROME/Default/Extensions/$BW" && ! -e "$CHROME/Default/Local Extension Settings/$BW" ]] || fail "bitwarden data removed"
+[[ -d "$CHROME/Default/Local Extension Settings/other" ]] || fail "other extensions untouched"
 [[ $(cat "$HOME/.zshrc") == "USER LINE" ]] || fail "zshrc back to the user's own line"
 [[ ! -s $HOME/.zprofile ]] || fail "zprofile block removed"
 [[ ! -e $HOME/.fake-keychain ]] || fail "gateway key deleted from keychain"

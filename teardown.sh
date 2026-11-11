@@ -14,11 +14,23 @@ echo "This removes the gateway key from the Keychain, the shell blocks in ~/.zsh
 echo "the nvim, ghostty, and paneru configs, the paneru login service, Neovim plugin data, and the git identity install.sh set."
 preexisting claude-dir || echo "It also deletes ~/.claude and ~/.claude.json, which install.sh created."
 preexisting claude-bin || echo "It also uninstalls Claude Code from ~/.local."
+echo "It quits Chrome and Brave and removes Bitwarden and its data from them. Log out of Bitwarden first."
 echo "Homebrew packages stay. Your project folders are untouched."
 read -r -p "Type yes to continue: " ok
 [[ $ok == yes ]] || { echo "Stopped."; exit 1; }
 
 security delete-generic-password -s ANTHROPIC_AUTH_TOKEN >/dev/null 2>&1 || true
+
+extension_files=$(grep -F "/External Extensions/" "$STATE/placed" | cut -f1 || true)
+if [[ -n $extension_files ]]; then
+  for app in "Google Chrome" "Brave Browser"; do
+    pgrep -x "$app" >/dev/null && osascript -e "quit app \"$app\"" || true
+  done
+  for _ in {1..20}; do
+    pgrep -x "Google Chrome" >/dev/null || pgrep -x "Brave Browser" >/dev/null || break
+    sleep 0.5
+  done
+fi
 
 while IFS=$'\t' read -r dest kind; do
   [[ -n $dest ]] || continue
@@ -41,6 +53,16 @@ if command -v paneru >/dev/null; then
   paneru uninstall >/dev/null 2>&1 || true
 fi
 rm -rf "$HOME/.local/state/paneru"
+
+# The browser drops the extension once its JSON file is gone, but leaves its storage behind.
+while IFS= read -r file; do
+  [[ -n $file ]] || continue
+  data=$(dirname "$(dirname "$file")")
+  id=$(basename "$file" .json)
+  rm -rf "$data"/*/"Extensions/$id" "$data"/*/"Local Extension Settings/$id" \
+    "$data"/*/"Managed Extension Settings/$id" "$data"/*/"Sync Extension Settings/$id" \
+    "$data"/*/IndexedDB/chrome-extension_"${id}"_*
+done <<<"$extension_files"
 
 if [[ -f $STATE/git-identity ]]; then
   git config --global --unset user.name || true

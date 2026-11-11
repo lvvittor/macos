@@ -9,6 +9,8 @@ KEYCHAIN_SERVICE="ANTHROPIC_AUTH_TOKEN"
 DRY_RUN=0
 MINIMAL=0
 STEP_LOG=()
+BITWARDEN_ID=nngceckbapebfimnlniiiahkandclblb
+BROWSERS=("Google Chrome|Google/Chrome" "Brave Browser|BraveSoftware/Brave-Browser")
 
 for arg in "$@"; do
   case "$arg" in
@@ -135,6 +137,22 @@ configs() {
   place "$HERE/config/paneru/paneru.toml" "$HOME/.paneru.toml"
 }
 
+# Chrome and Brave install a Web Store extension named by a JSON file in External Extensions,
+# and uninstall it when the file goes away.
+bitwarden() {
+  local entry app data found=0
+  for entry in "${BROWSERS[@]}"; do
+    app=${entry%%|*}
+    data="$HOME/Library/Application Support/${entry#*|}"
+    [[ -d "/Applications/$app.app" || -d "$HOME/Applications/$app.app" ]] || continue
+    found=1
+    run mkdir -p "$data/External Extensions"
+    place "$HERE/browser/bitwarden.json" "$data/External Extensions/$BITWARDEN_ID.json"
+    echo "Bitwarden is queued for $app. Quit and reopen it, then click Enable."
+  done
+  (( found )) || echo "Chrome and Brave are not installed, so Bitwarden was skipped. Install one and rerun install.sh."
+}
+
 git_identity() {
   if git config --global user.email >/dev/null 2>&1; then
     echo "git identity already set to $(git config --global user.email)."
@@ -172,6 +190,7 @@ summary() {
   5. Run nvim and :checkhealth lazy.
   6. When macOS asks, allow paneru under Privacy & Security > Accessibility.
      Then option+arrows move between windows and option+1..0 switch workspaces.
+  7. Reopen Chrome or Brave and click Enable on Bitwarden.
 When you leave, run teardown.sh from this folder.
 EOF
 }
@@ -185,6 +204,7 @@ if (( ! MINIMAL )); then
   step brew-bundle brew_bundle
   step pstack pstack
   step configs configs
+  step bitwarden bitwarden
   step git-identity git_identity
   step nvim-plugins nvim_plugins
   step window-manager window_manager

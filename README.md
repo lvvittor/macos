@@ -36,4 +36,4 @@ Paneru uses Option where Hyprland uses Super, and Cmd where it uses Alt.
 | Option + T, Option + F | Float, full width |
 | Option + minus or equal | Narrower, wider |
 
-Allow Paneru under Privacy & Security > Accessibility when macOS asks. Keep an external monitor above or below the laptop, not beside it.
+If Chrome or Brave is installed, reopen it and click Enable on Bitwarden. Log out of Bitwarden before teardown, which removes it and its data. Allow Paneru under Privacy & Security > Accessibility when macOS asks. Keep an external monitor above or below the laptop, not beside it.
