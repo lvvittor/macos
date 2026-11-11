@@ -132,7 +132,7 @@ configs() {
   run mkdir -p "$HOME/.config"
   place "$HERE/config/nvim" "$HOME/.config/nvim"
   place "$HERE/config/ghostty" "$HOME/.config/ghostty"
-  place "$HERE/config/tmux" "$HOME/.config/tmux"
+  place "$HERE/config/paneru/paneru.toml" "$HOME/.paneru.toml"
 }
 
 git_identity() {
@@ -152,6 +152,11 @@ nvim_plugins() {
   run nvim --headless "+Lazy! restore" +qa
 }
 
+window_manager() {
+  run paneru install || echo "paneru install exited non-zero. If the service already exists, that's fine."
+  run paneru start || echo "paneru start exited non-zero. If it is already running, that's fine."
+}
+
 summary() {
   printf '\n==> Timings\n'
   printf '  %s\n' "${STEP_LOG[@]}"
@@ -165,6 +170,8 @@ summary() {
   3. Run claude, then /model. Gateway models should be listed.
   4. Press ctrl+enter in Ghostty for a new window, shift+enter in claude for a newline.
   5. Run nvim and :checkhealth lazy.
+  6. When macOS asks, allow paneru under Privacy & Security > Accessibility.
+     Then option+arrows move between windows and option+1..0 switch workspaces.
 When you leave, run teardown.sh from this folder.
 EOF
 }
@@ -180,5 +187,6 @@ if (( ! MINIMAL )); then
   step configs configs
   step git-identity git_identity
   step nvim-plugins nvim_plugins
+  step window-manager window_manager
 fi
 summary

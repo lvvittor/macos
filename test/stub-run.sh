@@ -25,6 +25,7 @@ stub claude 'if [[ "$*" == "plugin marketplace list" ]]; then [[ -f $HOME/.fake-
 exit 0'
 stub brew 'exit 0'
 stub nvim 'exit 0'
+stub paneru 'echo "$*" >>"$HOME/.fake-paneru-calls"'
 stub gh 'exit 1'
 export MAC_SETUP_BREW_BIN="$BIN/brew"
 export PATH="$BIN:$PATH"
@@ -42,13 +43,16 @@ grep -q 'lazy' "$HOME/.config/nvim/init.lua" || fail "our nvim config placed"
 grep -q 'ai-gateway.vercel.sh/claude-code' "$HOME/.claude/settings.json" || fail "gateway base URL in settings"
 grep -q 'already in the Keychain' "$T/run2.log" || fail "second run reuses the key"
 [[ $(git config --global user.email) == test@example.com ]] || fail "git identity set"
-[[ -f $HOME/.config/ghostty/config && -f $HOME/.config/tmux/tmux.conf ]] || fail "ghostty and tmux configs placed"
+[[ -f $HOME/.config/ghostty/config ]] || fail "ghostty config placed"
+grep -q "window_focus_west" "$HOME/.paneru.toml" || fail "paneru config placed"
+grep -qx start "$HOME/.fake-paneru-calls" || fail "paneru service started"
 
 echo yes | bash "$ROOT/teardown.sh" >"$T/teardown.log"
 
 [[ $(cat "$HOME/.config/nvim/init.lua") == ORIGINAL ]] || fail "original nvim config restored"
 [[ ! -e $HOME/.config/nvim.mac-setup-bak ]] || fail "backup consumed"
-[[ ! -e $HOME/.config/ghostty && ! -e $HOME/.config/tmux ]] || fail "new configs removed"
+[[ ! -e $HOME/.config/ghostty && ! -e $HOME/.paneru.toml ]] || fail "new configs removed"
+grep -qx uninstall "$HOME/.fake-paneru-calls" || fail "paneru service uninstalled"
 [[ $(cat "$HOME/.zshrc") == "USER LINE" ]] || fail "zshrc back to the user's own line"
 [[ ! -s $HOME/.zprofile ]] || fail "zprofile block removed"
 [[ ! -e $HOME/.fake-keychain ]] || fail "gateway key deleted from keychain"

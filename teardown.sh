@@ -11,7 +11,7 @@ fi
 preexisting() { grep -qx "$1" "$STATE/preexisting" 2>/dev/null; }
 
 echo "This removes the gateway key from the Keychain, the shell blocks in ~/.zshrc and ~/.zprofile,"
-echo "the nvim, ghostty, and tmux configs, Neovim plugin data, and the git identity install.sh set."
+echo "the nvim, ghostty, and paneru configs, the paneru login service, Neovim plugin data, and the git identity install.sh set."
 preexisting claude-dir || echo "It also deletes ~/.claude and ~/.claude.json, which install.sh created."
 preexisting claude-bin || echo "It also uninstalls Claude Code from ~/.local."
 echo "Homebrew packages stay. Your project folders are untouched."
@@ -35,6 +35,12 @@ done
 preexisting claude-dir || rm -rf "$HOME/.claude" "$HOME/.claude.json"
 preexisting claude-bin || rm -rf "$HOME/.local/bin/claude" "$HOME/.local/share/claude" "$HOME/.cache/claude"
 rm -rf "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim"
+
+if command -v paneru >/dev/null; then
+  paneru stop >/dev/null 2>&1 || true
+  paneru uninstall >/dev/null 2>&1 || true
+fi
+rm -rf "$HOME/.local/state/paneru"
 
 if [[ -f $STATE/git-identity ]]; then
   git config --global --unset user.name || true
