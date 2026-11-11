@@ -8,17 +8,33 @@ STATE="$HOME/.mac-setup"
 KEYCHAIN_SERVICE="ANTHROPIC_AUTH_TOKEN"
 DRY_RUN=0
 MINIMAL=0
+TOOLS=0
 STEP_LOG=()
 BITWARDEN_ID=nngceckbapebfimnlniiiahkandclblb
 BROWSERS=("Google Chrome|Google/Chrome" "Brave Browser|BraveSoftware/Brave-Browser")
+# Keys, logins, and tool data that a day of work can leave behind. teardown.sh deletes the ones
+# that did not exist before the first install.
+SCRUB_PATHS=(
+  "$HOME/.ssh" "$HOME/.config/gh" "$HOME/.npmrc" "$HOME/.npm"
+  "$HOME/.docker" "$HOME/.colima" "$HOME/.lima"
+  "$HOME/Library/Application Support/com.vercel.cli"
+  "$HOME/Library/pnpm" "$HOME/.local/share/pnpm"
+  "$HOME/.local/share/mise" "$HOME/.local/state/mise" "$HOME/.cache/mise"
+  "$HOME/.config/rclone"
+)
 
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
     --minimal) MINIMAL=1 ;;
-    *) echo "unknown flag: $arg (use --minimal or --dry-run)" >&2; exit 2 ;;
+    --tools) TOOLS=1 ;;
+    *) echo "unknown flag: $arg (use --minimal, --tools, or --dry-run)" >&2; exit 2 ;;
   esac
 done
+if (( MINIMAL && TOOLS )); then
+  echo "--tools needs Homebrew, so it can't run with --minimal." >&2
+  exit 2
+fi
 
 run() {
   if (( DRY_RUN )); then printf '[dry-run] %s\n' "$*"; else "$@"; fi
@@ -71,7 +87,11 @@ preflight() {
     : >"$STATE/preexisting"
     [[ -e $HOME/.claude ]] && echo claude-dir >>"$STATE/preexisting"
     command -v claude >/dev/null && echo claude-bin >>"$STATE/preexisting"
-    touch "$STATE/placed"
+    touch "$STATE/placed" "$STATE/scrub"
+    local p
+    for p in "${SCRUB_PATHS[@]}"; do
+      [[ -e $p ]] || printf '%s\n' "$p" >>"$STATE/scrub"
+    done
   fi
   return 0
 }
@@ -170,6 +190,20 @@ nvim_plugins() {
   run nvim --headless "+Lazy! restore" +qa
 }
 
+tools() {
+  run env HOMEBREW_NO_AUTO_UPDATE=1 brew bundle --no-upgrade --file "$HERE/Brewfile.tools"
+  run mkdir -p "$HOME/.docker" "$HOME/.config/mise"
+  place "$HERE/config/docker/config.json" "$HOME/.docker/config.json"
+  place "$HERE/config/mise/config.toml" "$HOME/.config/mise/config.toml"
+  write_block "$HOME/.zshrc" mise 'eval "$(mise activate zsh)"'
+  run mise install || echo "mise install exited non-zero. Run mise install again in a new terminal."
+  if command -v vercel >/dev/null; then
+    echo "Vercel CLI already installed."
+  else
+    run npm install -g vercel
+  fi
+}
+
 window_manager() {
   run paneru install || echo "paneru install exited non-zero. If the service already exists, that's fine."
   run paneru start || echo "paneru start exited non-zero. If it is already running, that's fine."
@@ -191,8 +225,13 @@ summary() {
   6. When macOS asks, allow paneru under Privacy & Security > Accessibility.
      Then option+arrows move between windows and option+1..0 switch workspaces.
   7. Reopen Chrome or Brave and click Enable on Bitwarden.
-When you leave, run teardown.sh from this folder.
 EOF
+  if (( TOOLS )); then
+    echo "  8. Run colima start once, then docker run hello-world."
+    echo "  9. Run mise ls. bun, go, java, node, and python should be listed."
+    echo " 10. For Google Drive, run rclone config create gdrive drive scope=drive and sign in."
+  fi
+  echo "When you leave, run teardown.sh from this folder."
 }
 
 step preflight preflight
@@ -208,5 +247,6 @@ if (( ! MINIMAL )); then
   step git-identity git_identity
   step nvim-plugins nvim_plugins
   step window-manager window_manager
+  if (( TOOLS )); then step tools tools; fi
 fi
 summary

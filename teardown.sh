@@ -15,6 +15,7 @@ echo "the nvim, ghostty, and paneru configs, the paneru login service, Neovim pl
 preexisting claude-dir || echo "It also deletes ~/.claude and ~/.claude.json, which install.sh created."
 preexisting claude-bin || echo "It also uninstalls Claude Code from ~/.local."
 echo "It quits Chrome and Brave and removes Bitwarden and its data from them. Log out of Bitwarden first."
+echo "It deletes SSH keys, gh, npm, Docker, Vercel, and rclone logins, the Colima VM, and pnpm and mise data, unless they existed before install.sh first ran."
 echo "Homebrew packages stay. Your project folders are untouched."
 read -r -p "Type yes to continue: " ok
 [[ $ok == yes ]] || { echo "Stopped."; exit 1; }
@@ -63,6 +64,17 @@ while IFS= read -r file; do
     "$data"/*/"Managed Extension Settings/$id" "$data"/*/"Sync Extension Settings/$id" \
     "$data"/*/IndexedDB/chrome-extension_"${id}"_*
 done <<<"$extension_files"
+
+if [[ -f $STATE/scrub ]]; then
+  if grep -qxF "$HOME/.colima" "$STATE/scrub" && command -v colima >/dev/null; then
+    colima stop --force >/dev/null 2>&1 || true
+    colima delete --force >/dev/null 2>&1 || true
+  fi
+  while IFS= read -r path; do
+    [[ -n $path ]] || continue
+    rm -rf "$path"
+  done <"$STATE/scrub"
+fi
 
 if [[ -f $STATE/git-identity ]]; then
   git config --global --unset user.name || true

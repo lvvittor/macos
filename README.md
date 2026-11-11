@@ -6,13 +6,31 @@ Install everything:
 curl -fsSL https://raw.githubusercontent.com/lvvittor/macos/main/bootstrap.sh | bash
 ```
 
+Install everything plus dev tools (pnpm, just, mise with bun, go, java, node, and python, deno, the Vercel CLI, rclone, and Docker through Colima):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lvvittor/macos/main/bootstrap.sh | bash -s -- --tools
+```
+
 Install only Claude Code, with no admin password:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/lvvittor/macos/main/bootstrap.sh | bash -s -- --minimal
 ```
 
-Remove everything and put back the files it replaced:
+Start Docker once before using it:
+
+```bash
+colima start
+```
+
+Connect Google Drive:
+
+```bash
+rclone config create gdrive drive scope=drive
+```
+
+Remove everything, including SSH keys and logins made on this Mac, and put back the files it replaced:
 
 ```bash
 bash ~/mac-setup/teardown.sh

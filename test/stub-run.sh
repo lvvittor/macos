@@ -11,7 +11,8 @@ BIN="$T/bin"
 mkdir -p "$HOME/.config/nvim" "$BIN"
 echo ORIGINAL >"$HOME/.config/nvim/init.lua"
 echo "USER LINE" >"$HOME/.zshrc"
-mkdir -p "$HOME/Applications/Google Chrome.app"
+mkdir -p "$HOME/Applications/Google Chrome.app" "$HOME/.lima"
+echo KEEP >"$HOME/.lima/keep"
 CHROME="$HOME/Library/Application Support/Google/Chrome"
 BW=nngceckbapebfimnlniiiahkandclblb
 
@@ -26,15 +27,19 @@ esac'
 stub claude 'if [[ "$*" == "plugin marketplace list" ]]; then [[ -f $HOME/.fake-mkt ]] && echo cursor-plugins; exit 0; fi
 [[ "$*" == "plugin marketplace add cursor/plugins" ]] && touch "$HOME/.fake-mkt"
 exit 0'
-stub brew 'exit 0'
+stub brew 'echo "$*" >>"$HOME/.fake-brew-calls"'
 stub nvim 'exit 0'
+stub mise 'echo "$*" >>"$HOME/.fake-mise-calls"'
+stub npm 'echo "$*" >>"$HOME/.fake-npm-calls"'
+stub colima 'echo "$*" >>"$HOME/.fake-colima-calls"'
 stub paneru 'echo "$*" >>"$HOME/.fake-paneru-calls"'
 stub gh 'exit 1'
 export MAC_SETUP_BREW_BIN="$BIN/brew"
-export PATH="$BIN:$PATH"
+export PATH="$BIN:/usr/bin:/bin"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
+if bash "$ROOT/install.sh" --minimal --tools </dev/null >/dev/null 2>&1; then fail "--minimal --tools rejected"; fi
 printf 'Test User\ntest@example.com\n' | bash "$ROOT/install.sh" >"$T/run1.log"
 bash "$ROOT/install.sh" </dev/null >"$T/run2.log"
 
@@ -51,6 +56,23 @@ grep -q "window_focus_west" "$HOME/.paneru.toml" || fail "paneru config placed"
 grep -qx start "$HOME/.fake-paneru-calls" || fail "paneru service started"
 grep -q clients2.google.com "$CHROME/External Extensions/$BW.json" || fail "bitwarden queued for chrome"
 [[ ! -e "$HOME/Library/Application Support/BraveSoftware" ]] || fail "nothing written for brave, which is not installed"
+! grep -q Brewfile.tools "$HOME/.fake-brew-calls" || fail "tools skipped without --tools"
+! grep -q "mac-setup:mise" "$HOME/.zshrc" || fail "no mise hook without --tools"
+bash "$ROOT/install.sh" --tools </dev/null >"$T/run3.log"
+bash "$ROOT/install.sh" --tools </dev/null >"$T/run4.log"
+grep -q "Brewfile.tools" "$HOME/.fake-brew-calls" || fail "tools Brewfile installed with --tools"
+grep -q cliPluginsExtraDirs "$HOME/.docker/config.json" || fail "docker plugin config placed"
+grep -q "^node" "$HOME/.config/mise/config.toml" || fail "mise config placed"
+[[ $(grep -c "^# >>> mac-setup:mise >>>" "$HOME/.zshrc") == 1 ]] || fail "mise hook written once after two --tools runs"
+grep -qx install "$HOME/.fake-mise-calls" || fail "mise install ran"
+grep -qx "install -g vercel" "$HOME/.fake-npm-calls" || fail "vercel cli installed"
+grep -qxF "$HOME/.ssh" "$HOME/.mac-setup/scrub" || fail "missing ssh dir listed for teardown"
+! grep -qxF "$HOME/.lima" "$HOME/.mac-setup/scrub" || fail "preexisting lima dir not listed"
+mkdir -p "$HOME/.ssh" "$HOME/.colima"
+echo secret >"$HOME/.ssh/id_ed25519"
+echo token >"$HOME/.npmrc"
+mkdir -p "$HOME/.config/rclone"
+echo token >"$HOME/.config/rclone/rclone.conf"
 mkdir -p "$CHROME/Default/Extensions/$BW/1.0" "$CHROME/Default/Local Extension Settings/$BW" "$CHROME/Default/Local Extension Settings/other"
 
 echo yes | bash "$ROOT/teardown.sh" >"$T/teardown.log"
@@ -62,6 +84,11 @@ grep -qx uninstall "$HOME/.fake-paneru-calls" || fail "paneru service uninstalle
 [[ ! -e "$CHROME/External Extensions/$BW.json" ]] || fail "bitwarden file removed"
 [[ ! -e "$CHROME/Default/Extensions/$BW" && ! -e "$CHROME/Default/Local Extension Settings/$BW" ]] || fail "bitwarden data removed"
 [[ -d "$CHROME/Default/Local Extension Settings/other" ]] || fail "other extensions untouched"
+[[ ! -e $HOME/.ssh && ! -e $HOME/.npmrc && ! -e $HOME/.colima && ! -e $HOME/.docker ]] || fail "keys, tokens, and tool data removed"
+[[ ! -e $HOME/.config/mise/config.toml ]] || fail "mise config removed"
+[[ ! -e $HOME/.config/rclone ]] || fail "rclone token removed"
+[[ $(cat "$HOME/.lima/keep") == KEEP ]] || fail "preexisting lima dir kept"
+grep -q "delete --force" "$HOME/.fake-colima-calls" || fail "colima VM deleted"
 [[ $(cat "$HOME/.zshrc") == "USER LINE" ]] || fail "zshrc back to the user's own line"
 [[ ! -s $HOME/.zprofile ]] || fail "zprofile block removed"
 [[ ! -e $HOME/.fake-keychain ]] || fail "gateway key deleted from keychain"
