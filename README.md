@@ -1,4 +1,4 @@
-This repo sets up a fresh Mac with Claude Code on the Vercel AI Gateway, pstack, LazyVim, Ghostty, and the Paneru scrolling window manager. Paste each command into Terminal.app.
+This repo sets up a fresh Mac with Claude Code on the Vercel AI Gateway, pstack, LazyVim, Ghostty, Brave with Bitwarden, and the Paneru scrolling window manager. Paste each command into Terminal.app.
 
 Install everything:
 
@@ -36,4 +36,4 @@ Paneru uses Option where Hyprland uses Super, and Cmd where it uses Alt.
 | Option + T, Option + F | Float, full width |
 | Option + minus or equal | Narrower, wider |
 
-If Chrome or Brave is installed, reopen it and click Enable on Bitwarden. Log out of Bitwarden before teardown, which removes it and its data. Allow Paneru under Privacy & Security > Accessibility when macOS asks. Keep an external monitor above or below the laptop, not beside it.
+Reopen Brave and click Enable on Bitwarden. Log out of Bitwarden before teardown, which removes it and its data. Allow Paneru under Privacy & Security > Accessibility when macOS asks. Keep an external monitor above or below the laptop, not beside it.
